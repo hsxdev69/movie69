@@ -12,7 +12,10 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKey);
+    
+    // Background scroll disable karne ke liye
     document.body.style.overflow = "hidden";
+    
     return () => {
       document.removeEventListener("keydown", handleKey);
       document.body.style.overflow = "";
@@ -22,31 +25,29 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
   const embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] bg-black">
       {/* Close button */}
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-2xl text-white transition hover:bg-red-600 sm:right-8 sm:top-8"
+        className="absolute right-3 top-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/80 text-xl text-white transition hover:bg-red-600 sm:right-6 sm:top-6 sm:h-11 sm:w-11 sm:text-2xl"
         aria-label="Close player"
       >
         ✕
       </button>
 
       {/* Title */}
-      <div className="absolute left-4 top-4 z-10 text-sm text-gray-400 sm:left-8 sm:top-8 sm:text-base">
+      <div className="absolute left-3 top-3 z-20 text-xs text-gray-400 sm:left-6 sm:top-6 sm:text-base">
         Now Playing: <span className="font-semibold text-white">{title}</span>
       </div>
 
-      {/* Iframe player */}
-      <div className="h-full w-full pt-16">
-        <iframe
-          src={embedUrl}
-          className="h-full w-full border-0"
-          allowFullScreen
-          allow="autoplay; encrypted-media; picture-in-picture"
-          title={`Watch ${title}`}
-        />
-      </div>
+      {/* Iframe player — ab poora screen fit hai */}
+      <iframe
+        src={embedUrl}
+        className="absolute inset-0 h-full w-full border-0"
+        allowFullScreen
+        allow="autoplay; encrypted-media; picture-in-picture"
+        title={`Watch ${title}`}
+      />
     </div>
   );
 }
