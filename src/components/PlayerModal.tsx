@@ -12,8 +12,6 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKey);
-    
-    // Background scroll disable karne ke liye
     document.body.style.overflow = "hidden";
     
     return () => {
@@ -25,7 +23,7 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
   const embedUrl = `https://embed.smashystream.com/playere.php?tmdb=${tmdbId}`;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div className="fixed inset-0 z-[100] h-[100dvh] w-[100dvw] bg-black">
       {/* Close button */}
       <button
         onClick={onClose}
@@ -36,16 +34,16 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
       </button>
 
       {/* Title */}
-      <div className="absolute left-3 top-3 z-20 text-xs text-gray-400 sm:left-6 sm:top-6 sm:text-base">
+      <div className="pointer-events-none absolute left-3 top-3 z-20 text-xs text-gray-400 sm:left-6 sm:top-6 sm:text-base">
         Now Playing: <span className="font-semibold text-white">{title}</span>
       </div>
 
-      {/* Iframe player — ab poora screen fit hai */}
+      {/* Iframe player */}
       <iframe
         src={embedUrl}
         className="absolute inset-0 h-full w-full border-0"
         allowFullScreen
-        allow="autoplay; encrypted-media; picture-in-picture"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
         title={`Watch ${title}`}
       />
     </div>
