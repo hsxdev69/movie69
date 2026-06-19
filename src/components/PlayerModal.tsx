@@ -38,12 +38,14 @@ export default function PlayerModal({ tmdbId, title, onClose }: PlayerModalProps
         Now Playing: <span className="font-semibold text-white">{title}</span>
       </div>
 
-      {/* Iframe player */}
+      {/* Iframe player - Fullscreen Fixed */}
       <iframe
         src={embedUrl}
         className="absolute inset-0 h-full w-full border-0"
-        allowFullScreen
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowFullScreen={true}
+        webkitAllowFullScreen={true}
+        mozAllowFullScreen={true}
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
         title={`Watch ${title}`}
       />
     </div>
