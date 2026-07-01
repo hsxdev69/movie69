@@ -1,96 +1,114 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Search, Bell, Menu, X } from "lucide-react";
+import { cn } from "../utils/cn";
 
-interface NavbarProps {
-  onSearch: (query: string) => void;
-  searchQuery: string;
-  onHome: () => void;
-}
+const links = [
+  { label: "Home", to: "/" },
+  { label: "TV Shows", to: "/tv" },
+  { label: "Movies", to: "/movies" },
+  { label: "New & Popular", to: "/new" },
+  { label: "My List", to: "/my-list" },
+];
 
-export default function Navbar({ onSearch, searchQuery, onHome }: NavbarProps) {
+export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
-    if (isSearchOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isSearchOpen]);
+    setMobileOpen(false);
+  }, [location.pathname]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const value = inputRef.current?.value.trim();
-    if (value) {
-      onSearch(value);
-    }
-  };
-
-  const handleHomeClick = () => {
-    onHome();
-    setIsSearchOpen(false);
+    if (query.trim()) navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
   return (
-    <nav
-      className={`fixed top-0 z-50 w-full transition-all duration-500 ${
-        scrolled || searchQuery ? "bg-black" : "bg-gradient-to-b from-black/90 to-transparent"
-      }`}
+    <motion.nav
+      initial={{ y: -80 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className={cn(
+        "fixed top-0 z-50 flex w-full items-center justify-between px-4 sm:px-8 py-3 transition-colors duration-300",
+        scrolled || mobileOpen ? "bg-black" : "bg-gradient-to-b from-black/80 to-transparent"
+      )}
     >
-      <div className="mx-auto flex items-center justify-between px-4 py-3 sm:px-8 lg:px-12">
-        <div className="flex items-center gap-8">
-          <h1
-            onClick={handleHomeClick}
-            className="cursor-pointer text-2xl font-bold tracking-tight text-red-600 sm:text-3xl"
-          >
-            FLIXILY
-          </h1>
-          <ul className="hidden items-center gap-5 text-sm text-gray-300 md:flex">
-            <li onClick={handleHomeClick} className="cursor-pointer transition hover:text-white">Home</li>
-            <li className="cursor-pointer transition hover:text-white">TV Shows</li>
-            <li className="cursor-pointer transition hover:text-white">Movies</li>
-            <li className="cursor-pointer transition hover:text-white">New & Popular</li>
-            <li className="cursor-pointer transition hover:text-white">My List</li>
-          </ul>
-        </div>
-        <div className="flex items-center gap-3">
-          <form
-            onSubmit={handleSubmit}
-            className={`flex items-center overflow-hidden rounded-md border border-gray-600 transition-all duration-300 ${
-              isSearchOpen ? "w-48 sm:w-64" : "w-0 border-transparent"
-            }`}
-          >
-            <input
-              ref={inputRef}
-              type="text"
-              defaultValue={searchQuery}
-              placeholder="Search titles..."
-              className="h-8 w-full bg-black/80 px-3 text-sm text-white outline-none placeholder:text-gray-500"
-            />
-            <button
-              type="submit"
-              className="flex h-8 w-8 flex-shrink-0 items-center justify-center text-white hover:text-red-500"
+      <div className="flex items-center gap-6">
+        <Link to="/" className="text-xl sm:text-2xl font-black tracking-tight text-red-600">
+          STREAMIX
+        </Link>
+        <div className="hidden md:flex items-center gap-5 text-sm">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className={cn(
+                "transition-colors hover:text-zinc-300",
+                location.pathname === l.to ? "font-semibold text-white" : "text-zinc-200"
+              )}
             >
-              →
-            </button>
-          </form>
-          <button
-            onClick={() => setIsSearchOpen((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center text-lg text-gray-300 transition hover:text-white"
-            aria-label="Toggle search"
-          >
-            🔍
-          </button>
-          <div className="h-8 w-8 cursor-pointer rounded-sm bg-red-600"></div>
+              {l.label}
+            </Link>
+          ))}
         </div>
+        <button className="md:hidden text-white" onClick={() => setMobileOpen((v) => !v)}>
+          {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
-    </nav>
+
+      <div className="flex items-center gap-4">
+        <form onSubmit={submitSearch} className="flex items-center">
+          <motion.input
+            initial={false}
+            animate={{ width: searchOpen ? 180 : 0, opacity: searchOpen ? 1 : 0, paddingLeft: searchOpen ? 12 : 0 }}
+            transition={{ duration: 0.25 }}
+            className="h-9 rounded-sm border border-zinc-500 bg-black/70 text-sm text-white outline-none"
+            placeholder="Titles, people, genres"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={() => setSearchOpen((v) => !v)}
+            className="text-white ml-2"
+            aria-label="Search"
+          >
+            <Search size={20} />
+          </button>
+        </form>
+        <button className="hidden sm:block text-white" aria-label="Notifications">
+          <Bell size={20} />
+        </button>
+        <Link to="/my-list" className="flex h-8 w-8 items-center justify-center rounded bg-gradient-to-br from-red-600 to-red-900 text-sm font-bold text-white">
+          U
+        </Link>
+      </div>
+
+      {mobileOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="absolute left-0 top-full flex w-full flex-col gap-1 bg-black px-4 py-3 md:hidden"
+        >
+          {links.map((l) => (
+            <Link key={l.to} to={l.to} className="py-2 text-sm text-zinc-200 border-b border-zinc-800">
+              {l.label}
+            </Link>
+          ))}
+        </motion.div>
+      )}
+    </motion.nav>
   );
 }

@@ -1,98 +1,66 @@
-import { useRef, useState, useEffect } from "react";
-import { Movie, getImageUrl } from "../services/tmdb";
+import { useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import type { Media } from "../lib/tmdb";
+import MovieCard from "./MovieCard";
 
 interface MovieRowProps {
   title: string;
-  fetchMovies: () => Promise<Movie[]>;
-  onPlay: (id: number, title: string) => void;
+  items: Media[];
+  ranked?: boolean;
 }
 
-export default function MovieRow({ title, fetchMovies, onPlay }: MovieRowProps) {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [loading, setLoading] = useState(true);
-  const rowRef = useRef<HTMLDivElement>(null);
+export default function MovieRow({ title, items, ranked }: MovieRowProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [hovering, setHovering] = useState(false);
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchMovies();
-        setMovies(data.filter((m) => m.poster_path));
-      } catch {
-        // silently fail
-      }
-      setLoading(false);
-    };
-    load();
-  }, [fetchMovies]);
-
-  const scroll = (direction: "left" | "right") => {
-    if (rowRef.current) {
-      const { scrollLeft, clientWidth } = rowRef.current;
-      const scrollTo =
-        direction === "left"
-          ? scrollLeft - clientWidth * 0.7
-          : scrollLeft + clientWidth * 0.7;
-      rowRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
-    }
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.85;
+    el.scrollBy({ left: dir === "left" ? -amount : amount, behavior: "smooth" });
   };
 
-  if (loading) {
-    return (
-      <div className="mb-8 px-6 sm:px-12 lg:px-16">
-        <h3 className="mb-3 text-lg font-semibold text-white">{title}</h3>
-        <div className="flex gap-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-[140px] w-[230px] flex-shrink-0 animate-pulse rounded-sm bg-gray-800 sm:h-[170px] sm:w-[280px]"
-            />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (!items || items.length === 0) return null;
 
   return (
-    <div className="group/row mb-8">
-      <h3 className="mb-3 px-6 text-lg font-semibold text-white sm:px-12 lg:px-16">
-        {title}
-      </h3>
-      <div className="relative">
+    <motion.div
+      className="relative py-2"
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.5 }}
+    >
+      <h2 className="mb-2 px-4 sm:px-8 text-lg sm:text-xl font-bold text-white">{title}</h2>
+      <div className="group relative">
         <button
           onClick={() => scroll("left")}
-          className="absolute left-0 top-0 z-20 hidden h-full w-12 items-center justify-center bg-black/50 text-3xl text-white transition group-hover/row:flex"
+          className={`absolute left-0 top-0 z-30 hidden h-full w-10 sm:w-14 items-center justify-center bg-gradient-to-r from-black/80 to-transparent text-white transition-opacity sm:flex ${
+            hovering ? "opacity-100" : "opacity-0"
+          }`}
         >
-          ‹
+          <ChevronLeft size={32} />
         </button>
-
         <div
-          ref={rowRef}
-          className="flex gap-1.5 overflow-x-scroll scroll-smooth px-6 sm:px-12 lg:px-16 no-scrollbar"
+          ref={scrollRef}
+          className="scrollbar-hide flex gap-2 overflow-x-auto scroll-smooth px-4 pb-4 sm:px-8"
+          style={{ scrollbarWidth: "none" }}
         >
-          {movies.map((movie) => (
-            <div
-              key={movie.id}
-              onClick={() => onPlay(movie.id, movie.title || movie.name || "Untitled")}
-              className="h-[140px] w-[230px] flex-shrink-0 cursor-pointer overflow-hidden rounded-sm transition-transform duration-300 hover:scale-110 hover:z-10 sm:h-[170px] sm:w-[280px]"
-            >
-              <img
-                src={getImageUrl(movie.poster_path, "w342")}
-                alt={movie.title || movie.name || ""}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </div>
+          {items.map((item, idx) => (
+            <MovieCard key={`${item.id}-${idx}`} media={item} rank={ranked ? idx + 1 : undefined} />
           ))}
         </div>
-
         <button
           onClick={() => scroll("right")}
-          className="absolute right-0 top-0 z-20 hidden h-full w-12 items-center justify-center bg-black/50 text-3xl text-white transition group-hover/row:flex"
+          className={`absolute right-0 top-0 z-30 hidden h-full w-10 sm:w-14 items-center justify-center bg-gradient-to-l from-black/80 to-transparent text-white transition-opacity sm:flex ${
+            hovering ? "opacity-100" : "opacity-0"
+          }`}
         >
-          ›
+          <ChevronRight size={32} />
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
