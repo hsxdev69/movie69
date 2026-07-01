@@ -1,81 +1,46 @@
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SplashScreen from "./components/SplashScreen";
 import Navbar from "./components/Navbar";
-import Hero from "./components/Hero";
-import MovieRow from "./components/MovieRow";
-import SearchResults from "./components/SearchResults";
-import PlayerModal from "./components/PlayerModal";
-import Footer from "./components/Footer";
-import {
-  fetchTrending,
-  fetchPopularMovies,
-  fetchTopRated,
-  fetchUpcoming,
-  fetchActionMovies,
-  fetchComedyMovies,
-  fetchHorrorMovies,
-  fetchDocumentaries,
-  fetchTVShows,
-} from "./services/tmdb";
+import BottomNav from "./components/BottomNav";
+import Home from "./pages/Home";
+import Browse from "./pages/Browse";
+import NewAndPopular from "./pages/NewAndPopular";
+import MyListPage from "./pages/MyListPage";
+import SearchPage from "./pages/Search";
+import { MyListProvider } from "./context/MyListContext";
+import { DetailsModalProvider } from "./context/DetailsModalContext";
 
 export default function App() {
-  const [player, setPlayer] = useState<{ id: number; title: string } | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [showSplash, setShowSplash] = useState(true);
 
-  const trendingFn = useCallback(() => fetchTrending(), []);
-  const popularFn = useCallback(() => fetchPopularMovies(), []);
-  const topRatedFn = useCallback(() => fetchTopRated(), []);
-  const upcomingFn = useCallback(() => fetchUpcoming(), []);
-  const actionFn = useCallback(() => fetchActionMovies(), []);
-  const comedyFn = useCallback(() => fetchComedyMovies(), []);
-  const horrorFn = useCallback(() => fetchHorrorMovies(), []);
-  const docsFn = useCallback(() => fetchDocumentaries(), []);
-  const tvFn = useCallback(() => fetchTVShows(), []);
-
-  const handlePlay = (id: number, title: string) => {
-    setPlayer({ id, title });
-  };
-
-  const handleClose = () => {
-    setPlayer(null);
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleHome = () => {
-    setSearchQuery("");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2600);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-black">
-      <Navbar onSearch={handleSearch} searchQuery={searchQuery} onHome={handleHome} />
-
-      {searchQuery ? (
-        <SearchResults query={searchQuery} onPlay={handlePlay} />
-      ) : (
-        <>
-          <Hero onPlay={handlePlay} />
-          <div className="-mt-20 relative z-20 pb-8">
-            <MovieRow title="Trending Now" fetchMovies={trendingFn} onPlay={handlePlay} />
-            <MovieRow title="Popular on Flixily" fetchMovies={popularFn} onPlay={handlePlay} />
-            <MovieRow title="Top Rated" fetchMovies={topRatedFn} onPlay={handlePlay} />
-            <MovieRow title="Action Movies" fetchMovies={actionFn} onPlay={handlePlay} />
-            <MovieRow title="Comedy Movies" fetchMovies={comedyFn} onPlay={handlePlay} />
-            <MovieRow title="Horror Movies" fetchMovies={horrorFn} onPlay={handlePlay} />
-            <MovieRow title="Upcoming" fetchMovies={upcomingFn} onPlay={handlePlay} />
-            <MovieRow title="Popular TV Shows" fetchMovies={tvFn} onPlay={handlePlay} />
-            <MovieRow title="Documentaries" fetchMovies={docsFn} onPlay={handlePlay} />
-          </div>
-        </>
-      )}
-
-      {player && (
-        <PlayerModal tmdbId={player.id} title={player.title} onClose={handleClose} />
-      )}
-      <Footer />
-    </div>
+    <MyListProvider>
+      <BrowserRouter>
+        <DetailsModalProvider>
+          <AnimatePresence>{showSplash && <SplashScreen key="splash" />}</AnimatePresence>
+          {!showSplash && (
+            <div className="app-chrome bg-black min-h-screen min-h-[100dvh]">
+              <Navbar />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/movies" element={<Browse mediaType="movie" heading="Movies" />} />
+                <Route path="/tv" element={<Browse mediaType="tv" heading="TV Shows" />} />
+                <Route path="/new" element={<NewAndPopular />} />
+                <Route path="/my-list" element={<MyListPage />} />
+                <Route path="/search" element={<SearchPage />} />
+              </Routes>
+              <BottomNav />
+            </div>
+          )}
+        </DetailsModalProvider>
+      </BrowserRouter>
+    </MyListProvider>
   );
 }
