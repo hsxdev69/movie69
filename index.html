@@ -3,63 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#E50914" />
-    <meta name="description" content="Watch unlimited movies and TV shows on Streamix" />
-    
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="application-name" content="Streamix" />
-    
-    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Streamix" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
-    
-    <!-- Windows -->
-    <meta name="msapplication-TileColor" content="#E50914" />
-    <meta name="msapplication-tap-highlight" content="no" />
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/icon-192.png" />
-    
-    <title>Streamix — Movies & TV Shows</title>
-    
+    <meta name="apple-mobile-web-app-title" content="StreamFlix" />
+    <meta name="theme-color" content="#000000" />
+    <title>StreamFlix</title>
     <style>
-      html, body {
-        margin: 0;
-        padding: 0;
+      * { -webkit-tap-highlight-color: transparent; }
+      html, body, #root {
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
         background: #000;
         overscroll-behavior: none;
-      }
-      body {
-        -webkit-tap-highlight-color: transparent;
-        -webkit-touch-callout: none;
-        -webkit-user-select: none;
-        user-select: none;
-      }
-      /* Safe area padding for notched devices */
-      #root {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Register service worker for PWA
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((reg) => console.log('Service Worker registered:', reg.scope))
-            .catch((err) => console.log('Service Worker registration failed:', err));
-        });
-      }
-    </script>
   </body>
 </html>
