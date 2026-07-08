@@ -1,84 +1,86 @@
-import { motion } from "framer-motion";
-import { Plus, Check, Play, Star } from "lucide-react";
-import { imageUrl, title, releaseYear, type Media } from "../lib/tmdb";
-import { useMyList } from "../context/MyListContext";
-import { useDetailsModal } from "../context/DetailsModalContext";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Play, Star } from 'lucide-react';
+import { getImageUrl } from '../hooks/useTMDB';
+import { useVideoPlayer } from '../context/VideoContext';
+import type { Movie } from '../types';
 
 interface MovieCardProps {
-  media: Media;
-  rank?: number;
+  movie: Movie;
+  index: number;
+  onClick: (movie: Movie) => void;
+  variant?: 'portrait' | 'landscape' | 'wide';
 }
 
-export default function MovieCard({ media, rank }: MovieCardProps) {
-  const { isInList, toggle } = useMyList();
-  const { open } = useDetailsModal();
-  const poster = imageUrl(media.poster_path, "w342");
-  const inList = isInList(media.id);
+export default function MovieCard({ movie, index, onClick, variant = 'portrait' }: MovieCardProps) {
+  const [loaded, setLoaded] = useState(false);
+  const { openPlayer } = useVideoPlayer();
 
-  if (!poster && !media.backdrop_path) return null;
+  const title = movie.title || movie.name || '';
+  const year  = (movie.release_date || movie.first_air_date || '').slice(0, 4);
+
+  const isLandscape = variant === 'landscape' || variant === 'wide';
+  const imgPath = isLandscape ? movie.backdrop_path : movie.poster_path;
+  const imgSize = isLandscape ? 'w500' : 'w342';
+
+  const cardW = variant === 'wide'      ? 'w-64'
+              : variant === 'landscape' ? 'w-44'
+              : 'w-28';
+  const aspect = isLandscape ? 'aspect-video' : 'aspect-[2/3]';
 
   return (
-    <div className={`relative shrink-0 ${rank ? "pl-8" : ""}`}>
-      {rank && (
-        <span
-          className="absolute -left-1 bottom-0 z-0 select-none font-black text-transparent leading-none"
-          style={{
-            WebkitTextStroke: "3px #52525b",
-            fontSize: "6.5rem",
-          }}
-        >
-          {rank}
-        </span>
-      )}
+    <motion.div
+      initial={{ opacity: 0, x: 10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04, duration: 0.3 }}
+      className={`flex-shrink-0 ${cardW}`}
+    >
       <motion.div
-        className="group relative z-10 w-[140px] sm:w-[170px] cursor-pointer overflow-hidden rounded-md bg-zinc-900 shadow-lg"
-        whileHover={{ scale: 1.12, zIndex: 20, transition: { duration: 0.25 } }}
-        onClick={() => open(media)}
+        whileTap={{ scale: 0.94 }}
+        onClick={() => onClick(movie)}
+        className="relative cursor-pointer"
       >
-        <div className="aspect-[2/3] w-full overflow-hidden">
-          {poster ? (
-            <img src={poster} alt={title(media)} loading="lazy" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-zinc-800 p-2 text-center text-xs text-zinc-400">
-              {title(media)}
-            </div>
-          )}
+        {/* Image */}
+        <div className={`relative ${aspect} rounded-xl overflow-hidden bg-gray-900`}>
+          {!loaded && <div className="absolute inset-0 skeleton rounded-xl" />}
+          <img
+            src={getImageUrl(imgPath, imgSize) || ''}
+            alt={title}
+            className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setLoaded(true)}
+            loading="lazy"
+          />
+
+          {/* Bottom gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+          {/* Play button overlay */}
+          <motion.button
+            whileTap={{ scale: 0.88 }}
+            onClick={e => { e.stopPropagation(); openPlayer(movie); }}
+            className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center"
+          >
+            <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+          </motion.button>
+
+          {/* Type badge */}
+          <div className="absolute top-1.5 left-1.5">
+            <span className="px-1.5 py-0.5 bg-red-600/90 text-white text-[9px] font-bold rounded-md uppercase">
+              {movie.media_type === 'tv' ? 'TV' : 'HD'}
+            </span>
+          </div>
         </div>
-        <motion.div
-          className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black via-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100"
-          transition={{ duration: 0.2 }}
-        >
-          <p className="mb-1 line-clamp-2 text-[11px] font-semibold text-white">{title(media)}</p>
-          <div className="mb-1 flex items-center gap-1 text-[10px] text-zinc-300">
-            <Star size={10} className="fill-yellow-400 text-yellow-400" />
-            <span>{media.vote_average?.toFixed(1)}</span>
-            <span>·</span>
-            <span>{releaseYear(media)}</span>
+
+        {/* Title + rating */}
+        <div className="mt-1.5 px-0.5">
+          <p className="text-white text-[11px] font-semibold truncate">{title}</p>
+          <div className="flex items-center gap-1 mt-0.5">
+            {year && <span className="text-gray-500 text-[10px]">{year}</span>}
+            <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
+            <span className="text-gray-400 text-[10px]">{movie.vote_average.toFixed(1)}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              className="flex h-6 w-6 items-center justify-center rounded-full bg-white text-black hover:bg-zinc-200"
-              onClick={(e) => {
-                e.stopPropagation();
-                open(media);
-              }}
-              aria-label="Play"
-            >
-              <Play size={12} fill="black" />
-            </button>
-            <button
-              className="flex h-6 w-6 items-center justify-center rounded-full border border-zinc-400 bg-black/40 text-white hover:border-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggle(media);
-              }}
-              aria-label="Add to list"
-            >
-              {inList ? <Check size={12} /> : <Plus size={12} />}
-            </button>
-          </div>
-        </motion.div>
+        </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
